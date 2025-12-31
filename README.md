@@ -1,6 +1,6 @@
 # Tree Pickup Assignment Optimizer
 
-Zero-cost Christmas tree pickup assignment using K-Means clustering and free geocoding. No API keys required!
+Christmas tree pickup assignment using K-Means clustering and free geocoding. No API keys required!
 
 ## Overview
 
@@ -19,8 +19,12 @@ Automatically assign volunteer teams to collect Christmas trees from residential
 ## Quick Start
 
 ### Installation
-
 ```bash
+  # Install project from GitHub
+pip install git+https://github.com/cd0g05/TreePickupOptimizer.git
+```
+```bash
+  # Create virtual enviroment
 python -m venv .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 pip install -e .
@@ -41,7 +45,7 @@ address
 ### Run
 
 ```bash
-tree-pickup --addresses addresses.csv --teams 2
+tree-pickup --addresses addresses.csv --teams <number of teams> --max-trees <max trees per team>
 ```
 
 ### Example Output
@@ -97,6 +101,7 @@ tree-pickup --addresses FILE --teams N [--seed SEED] [--cache-file PATH]
 Options:
 - `--addresses FILE` or `-a FILE`: Path to CSV file with addresses (required)
 - `--teams N` or `-t N`: Number of teams to create (required)
+- `--max-trees N`: Maximum number of trees per team (default: 8) 
 - `--seed N` or `-s N`: Random seed for reproducibility (default: 42)
 - `--cache-file PATH` or `-c PATH`: Cache file location (default: `.geocode_cache.json`)
 
