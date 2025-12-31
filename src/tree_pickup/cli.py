@@ -55,7 +55,7 @@ def main() -> None:
         "--output-dir",
         "-o",
         type=str,
-        default=".",
+        default="./output-assignments/",
         help="Directory for output file (default: current directory)",
     )
 
