@@ -1,0 +1,35 @@
+Yes, I like this new approach. A few points of clarification:
+1) Use K-means
+2) I want to use geocoding to convert the addresses to coordinates. I think there should be low/0 cost options to do this.
+3) The csv can just be a list of "<Address>","<Address>",...
+4) For now I will accept unusual clusters, but I will probably want to limit the max size to like ~8. There is some amount of geographic wiggle room, it does not have to be 100% geographically optimal.
+5) Depot is now unnecessary, just go back to the user inputting a teams # and addresses.csv at runtime
+6)
+
+
+
+
+
+
+
+Here are my thoughts on the 20 issues:
+1) Would it be easier to go based on address or coordinates? The csv format can be changed to whatever works best, please tell me.
+2) The travel time is an important criteria for finding the optimal solution. Im not familiar with how the google api works, but does it find the fastest route between point A and B? Can this can just be done for each address? Is there a better option?
+3) HAve the user input a starting location along with the volunteer number. better yet, have the user input a file like user_info.csv that contains the starting location and volunteer number
+4) Handle this issue in whatever you think the best way would be while adhering to the project goals
+5) Would there be a better way to format the csv? should the user input the coordinates instead?
+6) I want to optimize duration, ignore distance and only care about duration
+7) Handle this issue in whatever you think the best way would be while adhering to the project goals
+8) No rate limiting needed, this will not be deployed publicly and only used privately
+9) Handle this issue in whatever you think the best way would be while adhering to the project goas
+10) Handle this issue in whatever you think the best way would be while adhering to the project goals
+11) Handle this issue in whatever you think the best way would be while adhering to the project goals
+12) Handle this issue in whatever you think the best way would be while adhering to the project goals
+13) Handle this issue in whatever you think the best way would be while adhering to the project goals
+14) Handle this issue in whatever you think the best way would be while adhering to the project goals
+15) Handle this issue in whatever you think the best way would be while adhering to the project goals
+16) Handle this issue in whatever you think the best way would be while adhering to the project goals
+17) Handle this issue in whatever you think the best way would be while adhering to the project goals
+18) This is a bigger issue to consider. Ideally I want to have this be of minimal cost, so i want to try to do actions that use as little api credits as possible. if that means changing to a different strategy, so be it.
+19) Handle this issue in whatever you think the best way would be while adhering to the project goals
+20) Handle this issue in whatever you think the best way would be while adhering to the project goals
