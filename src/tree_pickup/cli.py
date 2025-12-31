@@ -8,10 +8,12 @@ from rich.table import Table
 
 from tree_pickup.clusterer import Clusterer
 from tree_pickup.csv_parser import parse_addresses
+from tree_pickup.file_exporter import export_to_file
 from tree_pickup.geocoder import Geocoder
 from tree_pickup.models import Address
 from tree_pickup.team_generator import generate_team_names
-from tree_pickup.validators import validate_team_count
+from tree_pickup.validators import validate_capacity, validate_team_count
+from tree_pickup.visualizer import create_ascii_map
 
 console = Console()
 
@@ -41,6 +43,22 @@ def main() -> None:
         help="Path to geocoding cache file (default: .geocode_cache.json)",
     )
 
+    parser.add_argument(
+        "--max-trees",
+        "-m",
+        type=int,
+        default=8,
+        help="Maximum addresses per team (default: 8)",
+    )
+
+    parser.add_argument(
+        "--output-dir",
+        "-o",
+        type=str,
+        default=".",
+        help="Directory for output file (default: current directory)",
+    )
+
     args = parser.parse_args()
 
     console.print("[bold blue]Tree Pickup Assignment Optimizer[/bold blue]\n")
@@ -48,11 +66,15 @@ def main() -> None:
     address_strings = parse_addresses(args.addresses)
     console.print(f"[green]✓[/green] Loaded {len(address_strings)} addresses from CSV\n")
 
+    if args.max_trees < 1:
+        console.print("[red][ERROR] --max-trees must be at least 1[/red]")
+        sys.exit(1)
+
     validate_team_count(len(address_strings), args.teams)
+    validate_capacity(len(address_strings), args.teams, args.max_trees)
 
     geocoder = Geocoder()
     coordinates = geocoder.geocode_addresses(address_strings, args.cache_file)
-    console.print(f"[green]✓[/green] Geocoded {len(coordinates)} addresses\n")
 
     addresses = [
         Address(address_string=addr_str, coordinate=coord, address_number=i + 1)
@@ -62,21 +84,24 @@ def main() -> None:
     team_names = generate_team_names(args.teams)
 
     clusterer = Clusterer()
-    result = clusterer.cluster_addresses(addresses, args.teams, team_names, args.seed)
+    result = clusterer.cluster_addresses(
+        addresses, args.teams, team_names, args.seed, max_trees=args.max_trees
+    )
 
     console.print("[bold green]Team Assignments:[/bold green]\n")
+    console.print("[dim]Note: Distances are straight-line (as-the-crow-flies) and may differ from actual driving routes.[/dim]\n")
 
     table = Table(show_header=True, header_style="bold magenta")
     table.add_column("Team Name", style="cyan", width=20)
     table.add_column("Addresses", style="white")
-    table.add_column("Rough Estimated Distance", style="yellow", justify="right")
+    table.add_column("Estimated Distance (direct)", style="yellow", justify="right")
 
     for team in result.teams:
         address_list = "\n".join([f"• {addr.address_string}" for addr in team.addresses])
 
         distance_str = f"{team.mst_distance_km:.2f} km"
 
-        team_name = team.name
+        team_name = f"[{team.color}]{team.name}[/{team.color}]"
         if team.warnings:
             team_name += " ⚠"
 
@@ -99,7 +124,14 @@ def main() -> None:
     if warnings_found:
         console.print()
 
-    console.print("[bold green]✓ Assignment complete![/bold green]")
+    console.print("\n[bold cyan]Geographic Visualization:[/bold cyan]\n")
+    create_ascii_map(result, console)
+
+    filepath = export_to_file(result, args.max_trees, args.output_dir)
+    if filepath:
+        console.print(f"\n[green]✓ Results saved to: {filepath}[/green]")
+
+    console.print("\n[bold green]✓ Assignment complete![/bold green]")
 
     sys.exit(0)
 

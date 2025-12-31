@@ -17,3 +17,6 @@ htmlcov/
 # Project-specific
 .geocode_cache.json
 _bmad-output/
+
+addresses.csv
+addresses_two.csv

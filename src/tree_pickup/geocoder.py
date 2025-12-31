@@ -1,6 +1,8 @@
 """Geocoding with Nominatim API and local caching."""
 
+import certifi
 import json
+import ssl
 import sys
 import time
 from pathlib import Path
@@ -20,7 +22,9 @@ class Geocoder:
 
     def __init__(self, user_agent: str = "tree-pickup-optimizer"):
         """Initialize geocoder with Nominatim client."""
-        self.client = Nominatim(user_agent=user_agent)
+        # Create SSL context with certifi certificates to avoid SSL verification errors
+        ssl_context = ssl.create_default_context(cafile=certifi.where())
+        self.client = Nominatim(user_agent=user_agent, ssl_context=ssl_context)
 
     def geocode_addresses(
         self, addresses: list[str], cache_file: str = ".geocode_cache.json"
@@ -42,6 +46,7 @@ class Geocoder:
         coordinates = []
         cache_hits = 0
         cache_misses = 0
+        failed_addresses: list[tuple[int, str, str]] = []
 
         addresses_to_geocode = []
         for i, address in enumerate(addresses, 1):
@@ -77,23 +82,20 @@ class Geocoder:
                         location = self.client.geocode(original_address, timeout=10)
 
                         if location is None:
-                            console.print(
-                                f"\n[red][ERROR] Invalid address: Address #{idx} "
-                                f"'{original_address}' could not be geocoded. "
-                                f"Check your addresses and verify them.[/red]"
+                            failed_addresses.append(
+                                (idx, original_address, "could not be geocoded")
                             )
-                            sys.exit(1)
+                        else:
+                            coord = Coordinate(latitude=location.latitude, longitude=location.longitude)
+                            coordinates.append(coord)
 
-                        coord = Coordinate(latitude=location.latitude, longitude=location.longitude)
-                        coordinates.append(coord)
+                            cache[normalized] = {
+                                "lat": location.latitude,
+                                "lng": location.longitude,
+                                "display_name": location.address,
+                            }
+                            cache_hits += 1
 
-                        cache[normalized] = {
-                            "lat": location.latitude,
-                            "lng": location.longitude,
-                            "display_name": location.address,
-                        }
-
-                        cache_hits += 1
                         progress.update(
                             task, advance=1, description=f"Geocoding addresses ({cache_hits}/{len(addresses)})"
                         )
@@ -102,19 +104,23 @@ class Geocoder:
                             time.sleep(1)
 
                     except Exception as e:
-                        console.print(
-                            f"\n[red][ERROR] Failed to geocode address #{idx} "
-                            f"'{original_address}': {e}[/red]"
+                        failed_addresses.append((idx, original_address, str(e)))
+                        progress.update(
+                            task, advance=1, description=f"Geocoding addresses ({cache_hits}/{len(addresses)})"
                         )
-                        sys.exit(1)
+
+                        if loop_idx < len(addresses_to_geocode) - 1:
+                            time.sleep(1)
 
         self._save_cache(cache, cache_file)
 
-        if len(coordinates) != len(addresses):
-            console.print(
-                f"[red][ERROR] Geocoding incomplete: Expected {len(addresses)} coordinates "
-                f"but got {len(coordinates)}. Some addresses failed to geocode.[/red]"
-            )
+        success_count = len(addresses) - len(failed_addresses)
+        console.print(f"[green]✓[/green] Geocoded {success_count}/{len(addresses)} addresses\n")
+
+        if failed_addresses:
+            console.print("[red][ERROR] The following addresses could not be geocoded:[/red]")
+            for idx, address, error in failed_addresses:
+                console.print(f"[red]  - Address #{idx}: '{address}' - {error}[/red]")
             sys.exit(1)
 
         return coordinates

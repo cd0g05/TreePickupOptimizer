@@ -1,7 +1,7 @@
 """Tests for validators module."""
 
 import pytest
-from tree_pickup.validators import detect_outliers, validate_team_count
+from tree_pickup.validators import detect_outliers, validate_capacity, validate_team_count
 from tree_pickup.models import Address, Coordinate
 
 
@@ -112,3 +112,23 @@ def test_validate_team_count_negative():
         validate_team_count(10, -1)
 
     assert exc_info.value.code == 1
+
+
+def test_validate_capacity_exceeds_threshold():
+    """Test capacity validation when threshold is exceeded."""
+    with pytest.raises(SystemExit) as exc_info:
+        validate_capacity(20, 3, 8)
+
+    assert exc_info.value.code == 1
+
+
+def test_validate_capacity_at_threshold():
+    """Test capacity validation just below threshold (should pass)."""
+    validate_capacity(19, 3, 8)
+
+
+def test_validate_capacity_below_threshold():
+    """Test capacity validation below threshold (should pass)."""
+    validate_capacity(18, 3, 8)
+    validate_capacity(10, 3, 8)
+    validate_capacity(1, 1, 8)

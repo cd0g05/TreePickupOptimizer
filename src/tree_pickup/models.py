@@ -35,6 +35,7 @@ class Team(BaseModel):
     addresses: list[Address]
     mst_distance_km: float = 0.0
     warnings: list[str] = Field(default_factory=list)
+    color: str = ""
 
 
 class ClusterResult(BaseModel):

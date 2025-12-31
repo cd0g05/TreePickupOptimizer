@@ -1,0 +1,9 @@
+Tree Pickup Results
+Date: 2025-12-31 01:37:23
+Teams: 1
+Addresses: 1
+Max Trees per Team: 8
+
+Team Team Alpha
+    123 Main St
+

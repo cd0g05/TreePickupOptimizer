@@ -116,8 +116,60 @@ def test_load_corrupted_cache(tmp_path):
 
 
 @patch("tree_pickup.geocoder.Nominatim")
-def test_user_agent_set(mock_nominatim_class):
+@patch("ssl.create_default_context")
+def test_user_agent_set(mock_ssl, mock_nominatim_class):
     """Test that User-Agent is set correctly."""
+    mock_ssl_context = Mock()
+    mock_ssl.return_value = mock_ssl_context
+
     geocoder = Geocoder()
 
-    mock_nominatim_class.assert_called_once_with(user_agent="tree-pickup-optimizer")
+    mock_nominatim_class.assert_called_once()
+    call_kwargs = mock_nominatim_class.call_args.kwargs
+    assert call_kwargs["user_agent"] == "tree-pickup-optimizer"
+    assert "ssl_context" in call_kwargs
+
+
+@patch("tree_pickup.geocoder.Nominatim")
+@patch("time.sleep")
+def test_batch_error_collection(mock_sleep, mock_nominatim_class, tmp_path):
+    """Test that multiple geocoding failures are collected and reported together."""
+    cache_file = tmp_path / "cache.json"
+    cache_file.write_text("{}")
+
+    mock_client = Mock()
+    mock_nominatim_class.return_value = mock_client
+
+    mock_client.geocode.side_effect = [None, None, None]
+
+    geocoder = Geocoder()
+    addresses = ["Invalid 1", "Invalid 2", "Invalid 3"]
+
+    with pytest.raises(SystemExit) as exc_info:
+        geocoder.geocode_addresses(addresses, str(cache_file))
+
+    assert exc_info.value.code == 1
+
+
+@patch("tree_pickup.geocoder.Nominatim")
+@patch("time.sleep")
+def test_partial_failure_batch_errors(mock_sleep, mock_nominatim_class, tmp_path, mock_nominatim_location):
+    """Test successful addresses cached even when some fail."""
+    cache_file = tmp_path / "cache.json"
+    cache_file.write_text("{}")
+
+    mock_client = Mock()
+    mock_nominatim_class.return_value = mock_client
+
+    mock_client.geocode.side_effect = [mock_nominatim_location, None]
+
+    geocoder = Geocoder()
+    addresses = ["123 Main St", "Invalid Address"]
+
+    with pytest.raises(SystemExit):
+        geocoder.geocode_addresses(addresses, str(cache_file))
+
+    with open(cache_file, "r") as f:
+        saved_cache = json.load(f)
+
+    assert "123 main st" in saved_cache
