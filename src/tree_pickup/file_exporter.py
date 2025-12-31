@@ -50,6 +50,7 @@ def export_to_file(result: ClusterResult, max_trees: int, output_dir: str = ".")
 
     file_path = output_path / filename
 
+
     try:
         with open(file_path, "w", encoding="utf-8") as f:
             f.write("Tree Pickup Results\n")

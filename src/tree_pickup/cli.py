@@ -12,7 +12,7 @@ from tree_pickup.file_exporter import export_to_file
 from tree_pickup.geocoder import Geocoder
 from tree_pickup.models import Address
 from tree_pickup.team_generator import generate_team_names
-from tree_pickup.validators import validate_capacity, validate_team_count
+from tree_pickup.validators import detect_global_outliers, validate_capacity, validate_team_count
 from tree_pickup.visualizer import create_ascii_map
 
 console = Console()
@@ -80,6 +80,15 @@ def main() -> None:
         Address(address_string=addr_str, coordinate=coord, address_number=i + 1)
         for i, (addr_str, coord) in enumerate(zip(address_strings, coordinates))
     ]
+
+    # Detect and warn about outlier addresses
+    outliers = detect_global_outliers(addresses)
+    if outliers:
+        console.print("\n[yellow]⚠ WARNING: Outlier addresses detected (far from main group):[/yellow]")
+        for outlier in outliers:
+            outlier.is_outlier = True
+            console.print(f"[yellow]  • {outlier.address_string} - Please verify this address is correct[/yellow]")
+        console.print("[yellow]  These addresses will be excluded from visualization but included in clustering.[/yellow]\n")
 
     team_names = generate_team_names(args.teams)
 

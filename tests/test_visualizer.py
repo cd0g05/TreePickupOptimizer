@@ -28,8 +28,8 @@ def test_visualizer_with_normal_coordinates():
     output_text = output.getvalue()
 
     assert "+" in output_text
-    assert "Team Alpha" in output_text
-    assert "Team Bravo" in output_text
+    assert "Alpha: *" in output_text
+    assert "Bravo: *" in output_text
 
 
 def test_visualizer_identical_coordinates():
@@ -109,3 +109,31 @@ def test_visualizer_terminal_too_small():
     output_text = output.getvalue()
 
     assert "too small" in output_text.lower()
+
+
+def test_visualizer_excludes_outliers():
+    """Test visualization excludes addresses marked as outliers."""
+    coord1 = Coordinate(latitude=47.6, longitude=-122.3)
+    coord2 = Coordinate(latitude=47.7, longitude=-122.0)
+    coord3 = Coordinate(latitude=48.5, longitude=-123.0)
+
+    addr1 = Address(address_string="123 Main St", coordinate=coord1, address_number=1, is_outlier=False)
+    addr2 = Address(address_string="456 Oak Ave", coordinate=coord2, address_number=2, is_outlier=False)
+    addr3 = Address(address_string="999 Far St", coordinate=coord3, address_number=3, is_outlier=True)
+
+    team1 = Team(name="Alpha", addresses=[addr1, addr2], mst_distance_km=5.0, color="red")
+    team2 = Team(name="Bravo", addresses=[addr3], mst_distance_km=0.0, color="green")
+    result = ClusterResult(teams=[team1, team2], total_addresses=3, num_teams=2)
+
+    output = StringIO()
+    console = Console(file=output, width=80, height=40, force_terminal=True)
+
+    create_ascii_map(result, console)
+
+    output_text = output.getvalue()
+
+    # Map should be generated (not showing "same location" or errors)
+    assert "+" in output_text
+    # Legend should still include all teams
+    assert "Alpha: *" in output_text
+    assert "Bravo: *" in output_text

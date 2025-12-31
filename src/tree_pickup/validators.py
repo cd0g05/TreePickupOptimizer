@@ -59,6 +59,37 @@ def validate_team_count(num_addresses: int, num_teams: int) -> None:
         sys.exit(1)
 
 
+def detect_global_outliers(addresses: list[Address], threshold_km: float = 50.0) -> list[Address]:
+    """
+    Detect addresses that are outliers from the main group.
+
+    An address is considered an outlier if it's more than threshold_km away
+    from the centroid of all addresses.
+
+    Args:
+        addresses: List of addresses to check
+        threshold_km: Distance threshold in km (default 50.0 km)
+
+    Returns:
+        List of outlier addresses
+    """
+    if len(addresses) <= 2:
+        return []
+
+    # Calculate centroid of all addresses
+    avg_lat = sum(addr.coordinate.latitude for addr in addresses) / len(addresses)
+    avg_lng = sum(addr.coordinate.longitude for addr in addresses) / len(addresses)
+    centroid = type(addresses[0].coordinate)(latitude=avg_lat, longitude=avg_lng)
+
+    outliers = []
+    for addr in addresses:
+        distance = haversine_distance(addr.coordinate, centroid)
+        if distance > threshold_km:
+            outliers.append(addr)
+
+    return outliers
+
+
 def validate_capacity(num_addresses: int, num_teams: int, max_trees: int) -> None:
     """
     Validate that the number of addresses doesn't exceed safe capacity.

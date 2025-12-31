@@ -18,6 +18,7 @@ class Address(BaseModel):
     address_string: str
     coordinate: Optional[Coordinate] = None
     address_number: int
+    is_outlier: bool = False
 
     @field_validator("address_string")
     @classmethod

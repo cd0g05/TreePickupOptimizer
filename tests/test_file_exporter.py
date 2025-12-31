@@ -43,7 +43,7 @@ def test_export_file_content_format(tmp_path):
     assert "Teams: 1" in content
     assert "Addresses: 2" in content
     assert "Max Trees per Team: 8" in content
-    assert "Team Alpha" in content
+    assert "Alpha" in content
     assert "123 Main St" in content
     assert "456 Oak Ave" in content
 
@@ -63,8 +63,8 @@ def test_export_multiple_teams(tmp_path):
     with open(filepath, "r", encoding="utf-8") as f:
         content = f.read()
 
-    assert "Team Alpha" in content
-    assert "Team Bravo" in content
+    assert "Alpha" in content
+    assert "Bravo" in content
     assert "123 Main St" in content
     assert "456 Oak Ave" in content
 

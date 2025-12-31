@@ -20,3 +20,6 @@ _bmad-output/
 
 addresses.csv
 addresses_two.csv
+addresses_three.csv
+
+*.txt

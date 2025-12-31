@@ -1,7 +1,7 @@
 """Tests for validators module."""
 
 import pytest
-from tree_pickup.validators import detect_outliers, validate_capacity, validate_team_count
+from tree_pickup.validators import detect_global_outliers, detect_outliers, validate_capacity, validate_team_count
 from tree_pickup.models import Address, Coordinate
 
 
@@ -132,3 +132,118 @@ def test_validate_capacity_below_threshold():
     validate_capacity(18, 3, 8)
     validate_capacity(10, 3, 8)
     validate_capacity(1, 1, 8)
+
+
+def test_detect_global_outliers_none():
+    """Test global outlier detection with no outliers."""
+    addresses = [
+        Address(
+            address_string="Close 1",
+            coordinate=Coordinate(latitude=47.5, longitude=-122.0),
+            address_number=1,
+        ),
+        Address(
+            address_string="Close 2",
+            coordinate=Coordinate(latitude=47.501, longitude=-122.001),
+            address_number=2,
+        ),
+        Address(
+            address_string="Close 3",
+            coordinate=Coordinate(latitude=47.502, longitude=-122.002),
+            address_number=3,
+        ),
+    ]
+
+    outliers = detect_global_outliers(addresses)
+
+    assert len(outliers) == 0
+
+
+def test_detect_global_outliers_found():
+    """Test global outlier detection with address far from centroid."""
+    addresses = [
+        Address(
+            address_string="Main group 1",
+            coordinate=Coordinate(latitude=47.5, longitude=-122.0),
+            address_number=1,
+        ),
+        Address(
+            address_string="Main group 2",
+            coordinate=Coordinate(latitude=47.501, longitude=-122.001),
+            address_number=2,
+        ),
+        Address(
+            address_string="Main group 3",
+            coordinate=Coordinate(latitude=47.502, longitude=-122.002),
+            address_number=3,
+        ),
+        Address(
+            address_string="Far outlier",
+            coordinate=Coordinate(latitude=48.0, longitude=-122.5),
+            address_number=4,
+        ),
+    ]
+
+    outliers = detect_global_outliers(addresses)
+
+    assert len(outliers) == 1
+    assert outliers[0].address_string == "Far outlier"
+
+
+def test_detect_global_outliers_few_addresses():
+    """Test global outlier detection with 2 or fewer addresses."""
+    addresses_one = [
+        Address(
+            address_string="Single",
+            coordinate=Coordinate(latitude=47.5, longitude=-122.0),
+            address_number=1,
+        )
+    ]
+
+    addresses_two = [
+        Address(
+            address_string="First",
+            coordinate=Coordinate(latitude=47.5, longitude=-122.0),
+            address_number=1,
+        ),
+        Address(
+            address_string="Second",
+            coordinate=Coordinate(latitude=48.0, longitude=-122.5),
+            address_number=2,
+        ),
+    ]
+
+    assert len(detect_global_outliers(addresses_one)) == 0
+    assert len(detect_global_outliers(addresses_two)) == 0
+
+
+def test_detect_global_outliers_custom_threshold():
+    """Test global outlier detection with custom threshold."""
+    addresses = [
+        Address(
+            address_string="Main group 1",
+            coordinate=Coordinate(latitude=47.5, longitude=-122.0),
+            address_number=1,
+        ),
+        Address(
+            address_string="Main group 2",
+            coordinate=Coordinate(latitude=47.501, longitude=-122.001),
+            address_number=2,
+        ),
+        Address(
+            address_string="Main group 3",
+            coordinate=Coordinate(latitude=47.502, longitude=-122.002),
+            address_number=3,
+        ),
+        Address(
+            address_string="Somewhat far",
+            coordinate=Coordinate(latitude=47.7, longitude=-122.3),
+            address_number=4,
+        ),
+    ]
+
+    outliers_low_threshold = detect_global_outliers(addresses, threshold_km=15.0)
+    outliers_high_threshold = detect_global_outliers(addresses, threshold_km=100.0)
+
+    assert len(outliers_low_threshold) == 1
+    assert len(outliers_high_threshold) == 0

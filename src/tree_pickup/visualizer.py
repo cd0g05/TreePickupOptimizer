@@ -22,7 +22,8 @@ def create_ascii_map(result: ClusterResult, console: Console) -> None:
     all_addresses = []
     for team in result.teams:
         for address in team.addresses:
-            all_addresses.append((address, team.name, team.color))
+            if not address.is_outlier:
+                all_addresses.append((address, team.name, team.color))
 
     if not all_addresses:
         return
