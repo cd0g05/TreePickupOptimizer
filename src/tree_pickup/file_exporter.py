@@ -60,7 +60,7 @@ def export_to_file(result: ClusterResult, max_trees: int, output_dir: str = ".")
             f.write("\n")
 
             for team in result.teams:
-                f.write(f"Team {team.name}\n")
+                f.write(f"{team.name}\n")
                 for address in team.addresses:
                     f.write(f"    {address.address_string}\n")
                 f.write("\n")
